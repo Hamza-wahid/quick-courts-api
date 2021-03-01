@@ -15,6 +15,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
+  "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
+
   "com.pauldijou" %% "jwt-spray-json" % "5.0.0",
   "org.scalactic" %% "scalactic" % "3.2.2",
   "org.scalatest" %% "scalatest" % "3.2.2"

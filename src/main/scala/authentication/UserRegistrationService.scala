@@ -5,9 +5,6 @@ import authentication.RegistrationDetailsValidator.isDataValid
 import authentication.UserAuthResult._
 
 
-
-
-
 class UserRegistrationService extends Actor with ActorLogging {
   override def receive: Receive = {
     case UserRegistrationDetails(email, password, firstName, lastName, gender, membershipType) =>

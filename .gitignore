@@ -1,19 +1,14 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Example user template template
-### Example user template
 
 # IntelliJ project files
 .idea
 *.iml
 out
 gen
-### Scala template
+### Scala
 *.class
 *.log
 
-### SBT template
-# Simple Build Tool
-# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
+### SBT
 
 dist/*
 target/
@@ -24,4 +19,5 @@ project/plugins/project/
 .history
 .cache
 .lib/
-
+.bsp/
+null/
