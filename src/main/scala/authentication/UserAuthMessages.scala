@@ -5,31 +5,20 @@ case class UserRegistrationDetails(email: String,
                                    firstName: String,
                                    lastName: String,
                                    gender: Int,
-                                   membershipType: String
+                                   membershipType: Int
                                   )
 
 case class UserLoginRequest(email: String, password: String)
-
-case class ErrorWrapper(code: String,
-                        userMessage: String,
-                        exceptionMessage:
-                        Option[String] = None)
-
-case class StatusWrapper(status: String = "OK",
-                         token:
-                         Option[String] = None)
-
-
 
 
 trait UserAuthResult
 
 object UserAuthResult {
-  case class InvalidData(msg: String) extends UserAuthResult
+  case object InvalidData extends UserAuthResult
 
   case class UserExists(msg: String) extends UserAuthResult
 
-  case class UserNotExists(msg: String) extends UserAuthResult
+  case object UserNonExistent extends UserAuthResult
 
   case class Success(token: String) extends UserAuthResult
 }
