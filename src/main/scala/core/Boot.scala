@@ -6,10 +6,12 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import authentication.{UserAuthManager, UserRepo}
+import bookings.{BookingManager, BookingRepo}
 import com.typesafe.config.ConfigFactory
 import core.config.{DatabaseConfig, ServerConfig}
 import slick.jdbc.JdbcBackend.Database
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 
@@ -19,7 +21,7 @@ object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig {
 
 
   override implicit val actorSystem = ActorSystem("rest-api-app")
-  override implicit val executor = actorSystem.dispatcher
+  override val executor = global
   override implicit val materializer = ActorMaterializer()
 
   override val logger = Logging(actorSystem, getClass)
@@ -27,9 +29,12 @@ object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig {
   implicit val db = Database.forURL(dbUrl, dbUser, dbPassword)
 
   val userDB = new UserRepo
+  val bookingDB = new BookingRepo
+
   override val userAuthManger = actorSystem.actorOf(Props(new UserAuthManager(userDB)))
 
 
   Http().bindAndHandle(apiRoutes, serverInterface, serverPort)
 
+  override val bookingManagerService = actorSystem.actorOf(Props(new BookingManager(bookingDB)))
 }

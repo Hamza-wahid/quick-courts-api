@@ -1,40 +1,48 @@
 package authentication
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.pattern.{ask, pipe}
-import akka.util.Timeout
-import authentication.AuthUtils._
-import authentication.UserAuthResult._
+import akka.actor.{Actor, ActorLogging}
+import akka.pattern.pipe
+import authentication.AuthUtils.{checkPassword, hashPassword, isDataValid}
+import authentication.UserAuthResult.{InvalidData, Successful, UserExists, UserNonExistent}
+import core.authorisation.JwtAuthUtils.generateToken
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
-import core.JwtAuthorisation.generateToken
+import scala.concurrent.ExecutionContext
 
-class UserAuthManager(userDB: UserRepo) extends Actor with ActorLogging {
-
-  implicit val timeout: Timeout = Timeout(2 seconds)
-  implicit val executionContext: ExecutionContext = context.dispatcher
-  protected val dbActor = context.actorOf(Props(new UserDBActor(userDB)))
-
+class UserAuthManager(userDB: UserRepo)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
 
   override def receive: Receive = {
-    case userDetails @ UserRegistrationDetails(email, password, _, _, _, _) =>
+    case RegisterUser(UserRegistrationRequest(email, password, firstName, lastName, gender, membershipType)) =>
+      val origSender = sender()
       if (!isDataValid(email, password)) {
         log.warning(s"$email is not in a valid email format")
-        sender() ! InvalidData
+        origSender ! InvalidData
       } else {
-        log.info(s"Asking db actor")
-        (dbActor ? userDetails.copy(password = hashPassword(password)))
-          .mapTo[UserAuthResult]
-          .pipeTo(sender())
+        userDB.findByUserEmail(email).map {
+          case Some(user) =>
+            log.warning(s"User with email: ${user.email} is already registered")
+            origSender ! UserExists
+          case None =>
+            log.info(s"Inserting new user with email: $email to user database")
+            userDB.insert(User(None, email, hashPassword(password), firstName, lastName,gender, membershipType)).map {x =>
+              origSender ! Successful(generateToken(x.id.get, x.membershipType, 5))
+            }
+        }
       }
 
-    case request @ UserLoginRequest(_, _) =>
-      log.info(s"Sending details to db actor for Registration")
-      (dbActor ? request).mapTo[UserAuthResult].pipeTo(sender())
+    case LoginUser(UserLoginRequest(email, password)) =>
+      userDB.findByUserEmail(email).map {
+        case Some(user) if checkPassword(password, user.password) =>
+          log.info(s"User with email: ${user.email} exists")
+          Successful(generateToken(user.id.get, user.membershipType))
+        case Some(_) =>
+          log.info(s"Incorrect password provided for user: $email")
+          InvalidData
+        case None =>
+          log.info(s"User with email $email has not yet registered")
+          UserNonExistent
+      }.pipeTo(sender())
   }
 
+
 }
-
-
-

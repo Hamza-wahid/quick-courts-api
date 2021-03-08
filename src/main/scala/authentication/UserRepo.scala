@@ -1,7 +1,6 @@
 package authentication
 
 import slick.jdbc.PostgresProfile.api._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class UserRepo(implicit db: Database, ec: ExecutionContext) {
