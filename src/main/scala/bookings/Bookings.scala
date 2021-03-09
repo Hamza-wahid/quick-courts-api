@@ -9,8 +9,8 @@ case class Booking(id: Option[Long],
                    year: Int,
                    month: Int,
                    day: Int,
-                   startTime: Int,
-                   endTime: Int
+                   startTime: String,
+                   endTime: String
                   )
 
 class Bookings(tag: Tag) extends Table[Booking](tag, "bookings") {
@@ -22,8 +22,8 @@ class Bookings(tag: Tag) extends Table[Booking](tag, "bookings") {
   def year: Rep[Int] = column[Int]("year")
   def month: Rep[Int] = column[Int]("month")
   def day: Rep[Int] = column[Int]("day")
-  def startTime: Rep[Int] = column[Int]("start_time")
-  def endTime: Rep[Int] = column[Int]("end_time")
+  def startTime: Rep[String] = column[String]("start_time")
+  def endTime: Rep[String] = column[String]("end_time")
 
   def * : ProvenShape[Booking] = (id.?, userId, courtNumber, year, month, day, startTime, endTime) <>(Booking.tupled, Booking.unapply)
 }

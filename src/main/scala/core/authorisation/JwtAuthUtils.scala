@@ -1,21 +1,18 @@
 package core.authorisation
 
-import java.sql.Timestamp
 import java.time.{Instant, LocalTime}
 
-import akka.http.scaladsl.model.StatusCodes
+import core.authorisation.MembershipPrivileges.membershipPrivilegesMap
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
-import slick.lifted.SimpleFunction
 
 import scala.util.{Failure, Success}
 import spray.json._
-import slick.jdbc.PostgresProfile.api._
 
 case class Claims(id: Long, membership: Int)
 
 
 
-object JwtAuthUtils extends JwtAuthJsonProtocol {
+object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
 
   val algorithm = JwtAlgorithm.HS256
@@ -49,10 +46,9 @@ object JwtAuthUtils extends JwtAuthJsonProtocol {
 
   def isTokenValid(token: String):Boolean = JwtSprayJson.isValid(token , secretKey, Seq(algorithm))
 
-  def getTokenClaims(token: String): Option[Claims] = {
+  def getTokenClaims(token: String): Claims = {
     JwtSprayJson.decode(token, secretKey, Seq(algorithm)) match {
-      case Success(claims) => Option(claims.content.parseJson.convertTo[Claims])
-      case Failure(_) => None
+      case Success(claims) => claims.content.parseJson.convertTo[Claims]
     }
   }
 
@@ -65,7 +61,18 @@ object JwtAuthUtils extends JwtAuthJsonProtocol {
     case _ => true
   }
 
-  def isAuthorised(authorisiedMembers: Seq[Int], membershipType: Int): Boolean = authorisiedMembers.contains(membershipType)
+  def getMinutesPermittedPerDay(membershipType: Int): Int = membershipPrivilegesMap(membershipType)
+
+
+  val a = LocalTime.parse("17:00")
+  val b = LocalTime.parse("18:00")
+
+  val c = LocalTime.parse("17:30")
+  val d = LocalTime.parse("18:30")
+
+  println(c.isAfter(a) && c.isBefore(b))
+
+  // println(membershipPrivalleges(1))
 
 //  val token = generateToken(1, 1, 1000000000)
 //  println(token)
