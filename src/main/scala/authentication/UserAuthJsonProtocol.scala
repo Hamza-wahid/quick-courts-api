@@ -1,6 +1,8 @@
 package authentication
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import authentication.messages.AuthManagerMessages._
+import authentication.requests.UserAuthRequests._
 import spray.json._
 
 trait UserAuthJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {

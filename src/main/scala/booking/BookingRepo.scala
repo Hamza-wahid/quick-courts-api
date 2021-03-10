@@ -1,4 +1,4 @@
-package bookings
+package booking
 
 import java.sql.Date
 import java.time.{ LocalDate}
@@ -11,16 +11,16 @@ class BookingRepo(implicit db: Database, ec: ExecutionContext) {
   private val bookingsTQ = TableQuery[Bookings]
 
 
-  def getDailyBookings(year: Int, month: Int, day: Int): Future[Seq[Booking]] = {
-    val query = byDailyBookingsQuery(year, month, day)
-    db.run(query.result)
+  def getByDate(year: Int, month: Int, day: Int): Future[Seq[Booking]] = {
+    db.run(byDailyBookingsQuery(year, month, day).result)
   }
 
-  def getUserBookings(id: Long, year: Int, month: Int, day: Int) = {
-    val a = bookingsTQ.filter {x =>
-      x.id === id && x.day === day && x.year === year && x.month === month
-    }
-    db.run(a.result)
+  def getByUserId(userId: Long): Future[Seq[Booking]] =
+    db.run(bookingsTQ.filter(_.userId === userId).result)
+
+
+  def getByBookingId(id: Long): Future[Option[Booking]] = {
+    db.run(byBookingIdQueryCompiled(id).result.headOption)
   }
 
   def insert(booking: Booking): Future[Booking] = {
@@ -30,10 +30,18 @@ class BookingRepo(implicit db: Database, ec: ExecutionContext) {
     db.run(bookingWithId)
   }
 
+  def delete(id: Long): Future[Unit] = {
+    db.run(byBookingIdQueryCompiled(id).delete).map(_ => ())
+  }
+
   private def byDailyBookingsQuery(year: Int, month: Int, day: Int) =
     bookingsTQ.filter(x=> (x.day === day) && (x.year === year) && (x.month === month))
 
 
+  private def byBookingIdQuery(id: Rep[Long]) = bookingsTQ.filter(_.id === id)
+
+
+  private val byBookingIdQueryCompiled = Compiled(byBookingIdQuery _)
 
 
 }

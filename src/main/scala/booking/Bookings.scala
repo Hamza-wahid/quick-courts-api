@@ -1,4 +1,4 @@
-package bookings
+package booking
 
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.ProvenShape

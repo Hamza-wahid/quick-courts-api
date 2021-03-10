@@ -2,6 +2,7 @@ package core.authorisation
 
 import java.time.{Instant, LocalTime}
 
+import com.typesafe.config.ConfigFactory
 import core.authorisation.MembershipPrivileges.membershipPrivilegesMap
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 
@@ -16,9 +17,9 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
 
   val algorithm = JwtAlgorithm.HS256
-  val secretKey = "secret"   // TODO: Retrieve this from somewhere secure
+  val key = ConfigFactory.load().getString("jwt.key")
 
-  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 300): String = {
+  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 10000): String = {
     val claims = JwtClaim (
       expiration = Some(Instant.now.plusSeconds(expirationTimeSeconds).getEpochSecond),
       issuedAt = Some(Instant.now.getEpochSecond),
@@ -32,10 +33,10 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
           |
           |""".stripMargin
     )
-    JwtSprayJson.encode(claims, secretKey, algorithm)
+    JwtSprayJson.encode(claims, key, algorithm)
   }
 
-  def isTokenExpired(token: String): Boolean = JwtSprayJson.decode(token, secretKey, Seq(algorithm)) match {
+  def isTokenExpired(token: String): Boolean = JwtSprayJson.decode(token, key, Seq(algorithm)) match {
     case Success(claims) =>
       val a = claims.expiration.getOrElse(0.asInstanceOf[Long])
       a < Instant.now.getEpochSecond
@@ -44,10 +45,10 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
       true
   }
 
-  def isTokenValid(token: String):Boolean = JwtSprayJson.isValid(token , secretKey, Seq(algorithm))
+  def isTokenValid(token: String):Boolean = JwtSprayJson.isValid(token , key, Seq(algorithm))
 
   def getTokenClaims(token: String): Claims = {
-    JwtSprayJson.decode(token, secretKey, Seq(algorithm)) match {
+    JwtSprayJson.decode(token, key, Seq(algorithm)) match {
       case Success(claims) => claims.content.parseJson.convertTo[Claims]
     }
   }

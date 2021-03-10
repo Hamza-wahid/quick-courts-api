@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import authentication.{UserAuthManager, UserRepo}
-import bookings.{BookingManager, BookingRepo}
+import booking.{BookingManager, BookingRepo}
 import com.typesafe.config.ConfigFactory
 import core.config.{DatabaseConfig, ServerConfig}
 import slick.jdbc.JdbcBackend.Database
@@ -32,7 +32,6 @@ object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig {
   val bookingDB = new BookingRepo
 
   override val userAuthManger = actorSystem.actorOf(Props(new UserAuthManager(userDB)))
-
 
   Http().bindAndHandle(apiRoutes, serverInterface, serverPort)
 
