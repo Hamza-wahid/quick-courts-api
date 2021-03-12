@@ -9,9 +9,10 @@ case class Booking(id: Option[Long],
                    year: Int,
                    month: Int,
                    day: Int,
-                   startTime: String,
+                   startTime: String,  // hh::mm
                    endTime: String
                   )
+// run iso standard date time
 
 class Bookings(tag: Tag) extends Table[Booking](tag, "bookings") {
 

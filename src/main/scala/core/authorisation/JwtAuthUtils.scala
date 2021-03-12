@@ -41,7 +41,6 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
       val a = claims.expiration.getOrElse(0.asInstanceOf[Long])
       a < Instant.now.getEpochSecond
     case Failure(_) =>
-      println("Failure")
       true
   }
 
@@ -64,20 +63,5 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
   def getMinutesPermittedPerDay(membershipType: Int): Int = membershipPrivilegesMap(membershipType)
 
-
-  val a = LocalTime.parse("17:00")
-  val b = LocalTime.parse("18:00")
-
-  val c = LocalTime.parse("17:30")
-  val d = LocalTime.parse("18:30")
-
-  println(c.isAfter(a) && c.isBefore(b))
-
-  // println(membershipPrivalleges(1))
-
-//  val token = generateToken(1, 1, 1000000000)
-//  println(token)
-//
-//  println(isTokenApproved(Option(token)))
 
 }

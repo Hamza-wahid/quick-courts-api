@@ -16,8 +16,9 @@ object BookingManagerMessages {
 
   case class GetAllMemberBookings(userId: Long)
   case class GetBookingsByDate(dailyBookingsRequest: BookingsByDateRequest)
+  case class GetBooking(id: Long)
 
-  case class BookId(bookingId: Long)
+  case class BookingId(bookingId: Long)
 
   trait BookingRequestResult
 

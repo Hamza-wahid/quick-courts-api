@@ -11,7 +11,7 @@ trait BookingJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val createBookingRequestFormat = jsonFormat6(CreateBookingRequest)
   implicit val createBookingFormat = jsonFormat3(CreateBooking)
   implicit val getDailyBookingFormat = jsonFormat1(GetBookingsByDate)
-  implicit val bookingIdFormat = jsonFormat1(BookId)
+  implicit val bookingIdFormat = jsonFormat1(BookingId)
 
 
 }

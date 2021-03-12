@@ -8,6 +8,7 @@ import booking.messages.BookingManagerMessages._
 import core.authorisation.JwtAuthUtils.{generateToken, getMinutesPermittedPerDay}
 import java.time.temporal.ChronoUnit.MINUTES
 
+import booking.Constants._
 import booking.messages.BookingManagerMessages.BookingRequestResult._
 import booking.requests.BookingRequests._
 
@@ -16,10 +17,13 @@ import scala.util.Try
 
 class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) extends Actor with ActorLogging  {
 
+
   override def receive: Receive = {
 
+
+
     case GetBookingsByDate(BookingsByDateRequest(year, month, day)) =>
-      log.info(s"Requesting bookings for the day: $day/$month/$year")
+      log.info(RetrievingBookings(day, month, year))
       bookingDB
         .getByDate(year, month, day)
         .mapTo[Seq[Booking]]
@@ -30,6 +34,12 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
       log.info(s"Retrieving the bookings for member: $userId")
       bookingDB.getByUserId(userId)
         .mapTo[Seq[Booking]]
+        .pipeTo(sender())
+
+    case GetBooking(id) =>
+      log.info(RetrievingBooking(id))
+      bookingDB.getByBookingId(id)
+        .mapTo[Option[Booking]]
         .pipeTo(sender())
 
 
