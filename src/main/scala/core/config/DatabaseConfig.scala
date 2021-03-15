@@ -1,11 +1,11 @@
 package core.config
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config}
 
 trait DatabaseConfig {
-  def config: Config
+  def externalConfig: Config
 
-  lazy val dbUrl = config.getString("db.url")
-  lazy val dbUser = config.getString("db.user")
-  lazy val dbPassword = config.getString("db.password")
+  lazy val dbUrl = externalConfig.getString("db.url")
+  lazy val dbUser = externalConfig.getString("db.user")
+  lazy val dbPassword = externalConfig.getString("db.password")
 }

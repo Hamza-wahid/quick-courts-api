@@ -3,6 +3,7 @@ package core.authorisation
 import java.time.{Instant, LocalTime}
 
 import com.typesafe.config.ConfigFactory
+import core.Boot.secretKey
 import core.authorisation.MembershipPrivileges.membershipPrivilegesMap
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 
@@ -17,7 +18,7 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
 
   val algorithm = JwtAlgorithm.HS256
-  val key = ConfigFactory.load().getString("jwt.key")
+  val key = secretKey
 
   def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 10000): String = {
     val claims = JwtClaim (

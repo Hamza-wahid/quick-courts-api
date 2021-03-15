@@ -20,9 +20,9 @@ class UserAuthManager(userDB: UserRepo)(implicit ec: ExecutionContext) extends A
         log.warning(InvalidCredentialsFormat(email, password))
         sender() ! InvalidData
       } else {
-        val newUser = User(None, email, hashPassword(password), firstName, lastName,gender, membershipType)
+        val newUser = User(None, email, hashPassword(password), firstName, lastName, gender, membershipType)
         val userRegistrationResultFuture = for {
-          existingUser <- userDB.findByUserEmail(email)
+          existingUser <- userDB.getByUserEmail(email)
           userRegistrationResult <- handleUserRegistrationQueryResponse(existingUser, newUser)
         } yield userRegistrationResult
 
@@ -33,7 +33,7 @@ class UserAuthManager(userDB: UserRepo)(implicit ec: ExecutionContext) extends A
 
     case LoginUser(UserLoginRequest(email, password)) =>
       log.info(LoginRequest(email))
-      userDB.findByUserEmail(email)
+      userDB.getByUserEmail(email)
         .map(handleLoginQueryResponse(_,email,password))
         .mapTo[UserAuthResult]
         .pipeTo(sender())

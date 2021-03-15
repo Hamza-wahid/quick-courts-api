@@ -8,17 +8,17 @@ import akka.util.Timeout
 import authentication.{UserAuthManager, UserRepo}
 import booking.{BookingManager, BookingRepo}
 import com.typesafe.config.ConfigFactory
-import core.config.{DatabaseConfig, ServerConfig}
+import core.config.{DatabaseConfig, ServerConfig, AuthConfig}
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 
-object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig {
+object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig with AuthConfig {
 
   override val config = ConfigFactory.load()
-
+  override val externalConfig = ConfigFactory.load("external.conf")
 
   override implicit val actorSystem = ActorSystem("rest-api-app")
   override val executor = global

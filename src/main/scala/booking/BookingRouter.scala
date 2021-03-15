@@ -17,7 +17,7 @@ import core.authorisation.JwtAuthUtils.{getTokenClaims, isTokenApproved}
 trait BookingRouter extends BaseRoute with BookingJsonProtocol {
 
 
-  // TODO: Add an update endpoint + Read me file
+  // TODO: Read me file
 
   def bookingManagerService: ActorRef
 
@@ -30,17 +30,20 @@ trait BookingRouter extends BaseRoute with BookingJsonProtocol {
             onSuccess((bookingManagerService ? CreateBooking(claims.id, claims.membership, createBookingRequest))
               .mapTo[BookingRequestResult])(matchBookingRequestResult)
         } ~ get {
-          (pathEnd & parameters('day.as[Int], 'month.as[Int], 'year.as[Int])) { (day, month, year) =>
-            complete((bookingManagerService ? GetBookingsByDate(BookingsByDateRequest(year,day,month)))
+          (pathEnd & parameters('date)) { date =>
+            complete((bookingManagerService ? GetBookingsByDate(BookingsByDateRequest(date)))
               .mapTo[Seq[Booking]])
           } ~ path(LongNumber) { bookingId =>
-            complete((bookingManagerService ? GetBooking(bookingId))
-              .mapTo[Option[Booking]])
+            onSuccess((bookingManagerService ? GetBooking(bookingId, claims.id, claims.membership))
+              .mapTo[BookingRequestResult])(matchBookingRequestResult)
           }
         } ~ (path(LongNumber) & delete) { bookingId =>
           onSuccess((bookingManagerService ? CancelBooking(claims.id, claims.membership, bookingId))
             .mapTo[BookingRequestResult])(matchBookingRequestResult)
-        }
+        } ~ (path(LongNumber) & parameters('courtNumber.as[Int]) &  patch) {(bookingId, courtNumber) =>
+            onSuccess((bookingManagerService ? ModifyBooking(bookingId, courtNumber))
+              .mapTo[BookingRequestResult])(matchBookingRequestResult)
+          }
     }
   }
 }
@@ -51,5 +54,7 @@ trait BookingRouter extends BaseRoute with BookingJsonProtocol {
     case UserHasExceededAllowedTime(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.Forbidden))
     case CancellationSuccessful(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.NoContent))
     case BookingDoesNotExist(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.NotFound))
+    case BookingExists(token, booking) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.OK -> booking))
+    case UpdateSuccessful(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.OK))
   }
 }

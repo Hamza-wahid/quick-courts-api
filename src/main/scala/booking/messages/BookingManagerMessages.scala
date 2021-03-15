@@ -16,7 +16,15 @@ object BookingManagerMessages {
 
   case class GetAllMemberBookings(userId: Long)
   case class GetBookingsByDate(dailyBookingsRequest: BookingsByDateRequest)
-  case class GetBooking(id: Long)
+  case class GetBooking(bookingId: Long, userId: Long, membershipType: Int)
+  case class ModifyBooking(bookingId: Long, newCourtNumber: Int)
+
+  case class BookingResponse(courtNumber: Int,
+                             date: String,
+                             startTime: String,
+                             endTime: String
+                    )
+
 
   case class BookingId(bookingId: Long)
 
@@ -33,6 +41,10 @@ object BookingManagerMessages {
     case class CancellationSuccessful(token: String) extends BookingRequestResult
 
     case class BookingDoesNotExist(token: String) extends BookingRequestResult
+
+    case class BookingExists(token: String, booking: BookingResponse) extends BookingRequestResult
+
+    case class UpdateSuccessful(token: String) extends BookingRequestResult
 
   }
 }
