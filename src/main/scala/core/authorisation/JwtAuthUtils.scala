@@ -3,6 +3,7 @@ package core.authorisation
 import java.time.{Instant, LocalTime}
 
 import com.typesafe.config.ConfigFactory
+import core.Boot.secretKey
 import core.authorisation.MembershipPrivileges.membershipPrivilegesMap
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 
@@ -11,15 +12,13 @@ import spray.json._
 
 case class Claims(id: Long, membership: Int)
 
-
-
 object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
 
   val algorithm = JwtAlgorithm.HS256
-  val key = ConfigFactory.load().getString("jwt.key")
+  val key = secretKey
 
-  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 10000): String = {
+  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 600): String = {
     val claims = JwtClaim (
       expiration = Some(Instant.now.plusSeconds(expirationTimeSeconds).getEpochSecond),
       issuedAt = Some(Instant.now.getEpochSecond),
@@ -41,7 +40,6 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
       val a = claims.expiration.getOrElse(0.asInstanceOf[Long])
       a < Instant.now.getEpochSecond
     case Failure(_) =>
-      println("Failure")
       true
   }
 
@@ -64,20 +62,5 @@ object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
   def getMinutesPermittedPerDay(membershipType: Int): Int = membershipPrivilegesMap(membershipType)
 
-
-  val a = LocalTime.parse("17:00")
-  val b = LocalTime.parse("18:00")
-
-  val c = LocalTime.parse("17:30")
-  val d = LocalTime.parse("18:30")
-
-  println(c.isAfter(a) && c.isBefore(b))
-
-  // println(membershipPrivalleges(1))
-
-//  val token = generateToken(1, 1, 1000000000)
-//  println(token)
-//
-//  println(isTokenApproved(Option(token)))
 
 }

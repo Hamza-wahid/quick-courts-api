@@ -10,6 +10,7 @@ import akka.pattern.ask
 import authentication.messages.AuthManagerMessages._
 import authentication.messages.AuthManagerMessages.UserAuthResult._
 import authentication.requests.UserAuthRequests._
+import core.Constants.AccessToken
 
 
 trait AuthenticationRouter extends BaseRoute with UserAuthJsonProtocol {
@@ -28,9 +29,9 @@ trait AuthenticationRouter extends BaseRoute with UserAuthJsonProtocol {
 
   private def matchUserAuthResult(authResult: UserAuthResult): Route = authResult match {
     case InvalidData => complete(StatusCodes.BadRequest)
-    case UserExists => complete(StatusCodes.Conflict)
+    case UserExists => complete(StatusCodes.BadRequest)
     case UserNonExistent => complete(StatusCodes.Unauthorized)
-    case Successful(token) => respondWithHeader(RawHeader("Access-Token", token))(complete(StatusCodes.OK))
+    case Successful(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.OK))
   }
 
 

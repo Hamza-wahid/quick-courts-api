@@ -1,8 +1,5 @@
 package booking
 
-import java.sql.Date
-import java.time.{ LocalDate}
-
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -11,12 +8,15 @@ class BookingRepo(implicit db: Database, ec: ExecutionContext) {
   private val bookingsTQ = TableQuery[Bookings]
 
 
-  def getByDate(year: Int, month: Int, day: Int): Future[Seq[Booking]] = {
-    db.run(byDailyBookingsQuery(year, month, day).result)
+  def getByDate(date: String): Future[Seq[Booking]] = {
+    db.run(byDailyBookingsQuery(date).result)
   }
 
   def getByUserId(userId: Long): Future[Seq[Booking]] =
     db.run(bookingsTQ.filter(_.userId === userId).result)
+
+  def getByDateAndCourtNumber(date: String, courtNumber: Int): Future[Seq[Booking]] =
+    db.run(bookingsTQ.filter(booking => booking.date === date && booking.courtNumber === courtNumber).result)
 
 
   def getByBookingId(id: Long): Future[Option[Booking]] = {
@@ -34,8 +34,13 @@ class BookingRepo(implicit db: Database, ec: ExecutionContext) {
     db.run(byBookingIdQueryCompiled(id).delete).map(_ => ())
   }
 
-  private def byDailyBookingsQuery(year: Int, month: Int, day: Int) =
-    bookingsTQ.filter(x=> (x.day === day) && (x.year === year) && (x.month === month))
+  def update(id: Long, courtNumber: Int): Future[Unit] = {
+    val updateQuery = bookingsTQ.filter(_.id === id).map(_.courtNumber).update(courtNumber).map(_ => ())
+    db.run(updateQuery)
+  }
+
+  private def byDailyBookingsQuery(date: String) =
+    bookingsTQ.filter(_.date === date)
 
 
   private def byBookingIdQuery(id: Rep[Long]) = bookingsTQ.filter(_.id === id)
