@@ -14,7 +14,4 @@ trait BaseRoute {
 
   implicit def executor: ExecutionContext
 
-
-  //def handleActorResponse[T](dto:T, actorRef: ActorRef): Route
-  val logger: LoggingAdapter
 }

@@ -24,7 +24,6 @@ object Boot extends App with ApiRouter with DatabaseConfig with ServerConfig wit
   override val executor = global
   override implicit val materializer = ActorMaterializer()
 
-  override val logger = Logging(actorSystem, getClass)
   implicit val timeout = Timeout(2 seconds)
   implicit val db = Database.forURL(dbUrl, dbUser, dbPassword)
 
