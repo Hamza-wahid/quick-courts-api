@@ -12,15 +12,13 @@ import spray.json._
 
 case class Claims(id: Long, membership: Int)
 
-
-
 object JwtAuthUtils extends JwtAuthJsonProtocol  {
 
 
   val algorithm = JwtAlgorithm.HS256
   val key = secretKey
 
-  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 10000): String = {
+  def generateToken(id: Long, membership: Int, expirationTimeSeconds: Int = 600): String = {
     val claims = JwtClaim (
       expiration = Some(Instant.now.plusSeconds(expirationTimeSeconds).getEpochSecond),
       issuedAt = Some(Instant.now.getEpochSecond),

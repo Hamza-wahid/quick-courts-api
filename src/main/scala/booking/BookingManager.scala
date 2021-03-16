@@ -10,9 +10,8 @@ import java.time.temporal.ChronoUnit.MINUTES
 
 import booking.Constants._
 import booking.messages.BookingManagerMessages.BookingRequestResult._
-import booking.requests.BookingRequests._
+import booking.requests.BookingRequests.{CreateBookingRequest, _}
 import BookingUtils._
-import authentication.{User, UserRepo}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,38 +21,36 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
   override def receive: Receive = {
 
     case GetBookingsByDate(BookingsByDateRequest(date)) =>
-      log.info(RetrievingBookings(date))
+      log.info(GetBookingsLog(date))
       bookingDB
         .getByDate(date)
         .mapTo[Seq[Booking]]
         .pipeTo(sender())
 
 
-    case GetBooking(bookingId, userId, membershipType) =>
-      log.info(RetrievingBooking(bookingId))
-
+    case GetBooking(id, userId, membershipType) =>
+      log.info(GetBookingLog(id))
       val token = generateToken(userId, membershipType)
 
-      bookingDB.getByBookingId(bookingId)
+      bookingDB.getByBookingId(id)
         .map(handleGetBooking(token, _))
         .mapTo[BookingRequestResult]
         .pipeTo(sender())
-
 
     case CreateBooking(userId, membershipType, CreateBookingRequest(courtNumber,startDateTime, endDateTime)) =>
       val date = extractDate(startDateTime)
       val startTime = extractTime(startDateTime)
       val endTime = extractTime(endDateTime)
 
-      log.info(s"Request by user: $userId to book on the date $date between $startTime and $endTime ")
+      log.info(CreateBookingLog(userId, date, startTime, endTime))
 
       val booking = Booking(None,userId, courtNumber, date, startTime, endTime)
       val token = generateToken(userId, membershipType)
 
       val bookingRequestResultFuture = for {
         allBookingsOnDate <- bookingDB.getByDate(date)
-        (isAvailable, isPermitted) = isBookingAuthorised(allBookingsOnDate, userId, membershipType, courtNumber, startTime, endTime)
-        bookingRequestResult <- handleBookingAuthorizedResponse(isAvailable, isPermitted, booking, token)
+        (isAvailable, isPermitted) = isBookingEligible(allBookingsOnDate, userId, membershipType, courtNumber, startTime, endTime)
+        bookingRequestResult <- handleBookingEligibility(isAvailable, isPermitted, booking, token)
       } yield bookingRequestResult
 
       bookingRequestResultFuture
@@ -61,30 +58,31 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
         .pipeTo(sender())
 
     case CancelBooking(userId, membershipType, id) =>
-      log.info(s"Request by $userId to cancel booking: $id")
+      log.info(CancelBookingLog(userId, id))
       val token = generateToken(userId, membershipType)
 
       val cancellationRequestResultFuture = for {
         bookingOption <- bookingDB.getByBookingId(id)
-        bookingRequestResult <- handleCancellationRequest(bookingOption,id,token)
+        bookingRequestResult <- handleCancellationRequest(bookingOption,id,token, userId)
       } yield bookingRequestResult
 
       cancellationRequestResultFuture
         .mapTo[BookingRequestResult]
         .pipeTo(sender())
 
-    case ModifyBooking(id, newCourtNumber) =>
-      log.info("Modify request")
+    case ModifyBooking(id, userId, membershipType, newCourtNumber) =>
+      log.info(ModifyBookingLog(id, newCourtNumber))
+      val token = generateToken(userId, membershipType)
       val modificationRequestResultFuture = bookingDB.getByBookingId(id).flatMap {
         case None =>
-          Future.successful(BookingDoesNotExist(""))
+          log.info(BookingDoesNotExistLog(id))
+          Future.successful(BookingDoesNotExist(token))
         case Some(booking) =>
-          val startTime = convertToLocalTime(booking.startTime)
-          val endTime = convertToLocalTime(booking.endTime)
+          log.info(BookingExistsLog(id))
            for {
             bookings <- bookingDB.getByDateAndCourtNumber(booking.date, newCourtNumber)
-            isAvailable = isSlotAvailable(bookings, startTime, endTime)
-            updateRequestResult <- perms(id, newCourtNumber, isAvailable)
+            isAvailable = isSlotAvailable(bookings, booking.startTime, booking.endTime)
+            updateRequestResult <- handleModificationRequest(booking, newCourtNumber, isAvailable, token, userId)
           } yield updateRequestResult
 
       }
@@ -93,31 +91,27 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
         .mapTo[BookingRequestResult]
         .pipeTo(sender())
 
-
   }
 
-  private def isBookingAuthorised(allBookingsOnDate: Seq[Booking],
+  private def isBookingEligible(allBookingsOnDate: Seq[Booking],
                     userId: Long,
                     membershipType: Int,
                     courtNumber: Int,
                     startTime: String,
                     endTime: String): (Boolean, Boolean) = {
-    val startTimeFormatted = convertToLocalTime(startTime)
-    val endTimeFormatted = convertToLocalTime(endTime)
-    val isAvailable = isSlotAvailable(allBookingsOnDate.filter(_.courtNumber == courtNumber), startTimeFormatted,endTimeFormatted)
-    val isPermitted = isBookingPermitted(allBookingsOnDate.filter(_.userId == userId), membershipType, startTimeFormatted.until(endTimeFormatted, MINUTES))
+    val isAvailable = isSlotAvailable(allBookingsOnDate.filter(_.courtNumber == courtNumber), startTime, endTime)
+    val isPermitted = isBookingPermitted(allBookingsOnDate.filter(_.userId == userId), membershipType, startTime.until(endTime, MINUTES))
     (isAvailable, isPermitted)
   }
 
 
 
 
-  private def isSlotAvailable(bookings: Seq[Booking], proposedStartTime: LocalTime, proposedEndTime: LocalTime): Boolean = {
+  private def isSlotAvailable(bookings: Seq[Booking],
+                              proposedStartTime: LocalTime,
+                              proposedEndTime: LocalTime): Boolean = {
     bookings.forall { booking =>
-      val currentStartTime = convertToLocalTime(booking.startTime)
-      val currentEndTime = convertToLocalTime(booking.endTime)
-
-      isAvailable(proposedStartTime, proposedEndTime, currentStartTime, currentEndTime)
+      isAvailable(proposedStartTime, proposedEndTime, booking.startTime, booking.endTime)
     }
   }
 
@@ -132,42 +126,67 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
     startTimeAvailable && endTimeAvailable
   }
 
-  private def isBookingPermitted(bookings: Seq[Booking], membershipType: Int, bookingLength: Long): Boolean = {
+  private def isBookingPermitted(bookings: Seq[Booking],
+                                 membershipType: Int,
+                                 bookingLength: Long): Boolean = {
+
     val minutesCurrentlyBooked = bookings.map { booking =>
-      val startTime = convertToLocalTime(booking.startTime)
-      val endTime = convertToLocalTime(booking.endTime)
-      startTime.until(endTime,MINUTES)
+      booking.startTime.until(booking.endTime,MINUTES)
     }.sum
     (bookingLength + minutesCurrentlyBooked) <= getMinutesPermittedPerDay(membershipType)
   }
 
-  private def handleBookingAuthorizedResponse(isSlotAvailable: Boolean,
+  private def handleBookingEligibility(isSlotAvailable: Boolean,
                              isUserAuthorised: Boolean,
                              booking: Booking,
                              token: String): Future[BookingRequestResult] = {
-    log.info(s"Slot Available: $isSlotAvailable, User is Authorised: $isUserAuthorised")
+
+    log.info(SlotEligibilityLog(isSlotAvailable, isUserAuthorised))
 
     (isSlotAvailable, isUserAuthorised) match {
     case (true, true) =>
+      log.info(AddingBookingLog)
       bookingDB.insert(booking).map( booking => BookingSuccessful(booking.id.get,token))
     case (false, _) =>
+      log.warning(SlotNotAvailableLog)
       Future.successful(SlotNotAvailable(token))
-    case (_, false) => Future.successful(UserHasExceededAllowedTime(token))
+    case (_, false) =>
+      log.warning(UserExceededTimeLog)
+      Future.successful(UserNotAuthorised(token))
     }
   }
 
-  private def perms(id: Long, courtNumber: Int, slotAvailable: Boolean): Future[BookingRequestResult] = {
-    log.info(s"SLOT: $slotAvailable")
-    if (slotAvailable) {
-      bookingDB.update(id, courtNumber).map(_ => UpdateSuccessful("") )
-    } else Future.successful(SlotNotAvailable(""))
+  private def handleModificationRequest(booking: Booking,
+                                        newCourtNumber: Int,
+                                        slotAvailable: Boolean,
+                                        token: String,
+                                        userId: Long): Future[BookingRequestResult] = {
+    if (booking.userId != userId) {
+      log.warning(UpdateNotAuthorizedLog(booking.userId, userId, booking.id.get))
+      Future.successful(UserNotAuthorised(token))
+    }
+    else if (slotAvailable) {
+      log.info(UpdatingBookingLog(booking.id.get))
+      bookingDB.update(booking.id.get, newCourtNumber).map(_ => UpdateSuccessful(token))
+    }
+    else {
+      log.warning(SlotNotAvailableLog)
+      Future.successful(SlotNotAvailable(token))
+    }
   }
 
-  private def handleCancellationRequest(bookingOption: Option[Booking], id: Long, token: String): Future[BookingRequestResult] = bookingOption match {
-    case Some(_) =>
-      bookingDB.delete(id).map(_ => CancellationSuccessful(token))
+  private def handleCancellationRequest(bookingOption: Option[Booking], id: Long, token: String, userId: Long): Future[BookingRequestResult] = bookingOption match {
+    case Some(booking) =>
+      if (booking.userId != userId) {
+        log.warning(CancellationNotAuthorizedLog(booking.userId, userId, id))
+        Future.successful(UserNotAuthorised(token))
+      }
+      else {
+        log.info(DeletingBookingLog(id))
+        bookingDB.delete(id).map(_ => CancellationSuccessful(token))
+      }
     case None =>
-      log.info(s"Booking: $id does not exist")
+      log.warning(BookingDoesNotExistLog(id))
       Future.successful(BookingDoesNotExist(token))
   }
 
@@ -183,5 +202,4 @@ class BookingManager(bookingDB: BookingRepo)(implicit ec: ExecutionContext) exte
         )
       )
   }
-
 }

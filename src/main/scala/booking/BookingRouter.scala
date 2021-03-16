@@ -41,7 +41,7 @@ trait BookingRouter extends BaseRoute with BookingJsonProtocol {
           onSuccess((bookingManagerService ? CancelBooking(claims.id, claims.membership, bookingId))
             .mapTo[BookingRequestResult])(matchBookingRequestResult)
         } ~ (path(LongNumber) & parameters('courtNumber.as[Int]) &  patch) {(bookingId, courtNumber) =>
-            onSuccess((bookingManagerService ? ModifyBooking(bookingId, courtNumber))
+            onSuccess((bookingManagerService ? ModifyBooking(bookingId,claims.id, claims.membership, courtNumber))
               .mapTo[BookingRequestResult])(matchBookingRequestResult)
           }
     }
@@ -51,7 +51,7 @@ trait BookingRouter extends BaseRoute with BookingJsonProtocol {
   private def matchBookingRequestResult(bookingRequestResult: BookingRequestResult): Route = bookingRequestResult match {
     case BookingSuccessful(bookingId,token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.Created -> BookingId(bookingId)))
     case SlotNotAvailable(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.Conflict))
-    case UserHasExceededAllowedTime(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.Forbidden))
+    case UserNotAuthorised(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.Forbidden))
     case CancellationSuccessful(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.NoContent))
     case BookingDoesNotExist(token) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.NotFound))
     case BookingExists(token, booking) => respondWithHeader(RawHeader(AccessToken, token))(complete(StatusCodes.OK -> booking))

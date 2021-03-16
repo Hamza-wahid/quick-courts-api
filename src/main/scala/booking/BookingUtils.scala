@@ -9,22 +9,20 @@ object BookingUtils {
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
   def extractDate(dateTimeString: String): String = {
-    LocalDateTime
-      .parse(dateTimeString, dateTimeFormatter)
+    convertToLocalDateTime(dateTimeString)
       .toLocalDate
       .toString
   }
 
-  def convertToLocalDate(dateTimeString: String) = LocalDateTime.parse(dateTimeString, dateTimeFormatter)
-
   def extractTime(dateTimeString: String): String = {
-    LocalDateTime
-      .parse(dateTimeString, dateTimeFormatter)
+    convertToLocalDateTime(dateTimeString)
       .toLocalTime
       .toString
   }
 
-  def convertToLocalTime(timeString: String): LocalTime = LocalTime.parse(timeString, timeFormatter)
+  def convertToLocalDateTime(dateTimeString: String): LocalDateTime = LocalDateTime.parse(dateTimeString, dateTimeFormatter)
+
+  implicit def convertToLocalTime(timeString: String): LocalTime = LocalTime.parse(timeString, timeFormatter)
 
 
 }
