@@ -12,9 +12,8 @@ Members are able to create, cancel and modify bookings
 
 ### End Points
 All responses will be in JSON with appropriate Status codes as per REST semantics.
-#### Auth (  api/auth   )
 
-###### POST /register
+###### POST auth/register
     Arguments
         
     {
@@ -31,7 +30,7 @@ All responses will be in JSON with appropriate Status codes as per REST semantic
     409 Conflict - User has already registered
     400 Bad Request on Failure - Password/email are in an incorrect format
     
-  ######  POST /login
+  ######  POST auth/login
     
     Arguments
             
@@ -44,15 +43,13 @@ All responses will be in JSON with appropriate Status codes as per REST semantic
     200 OK on Success
     401 Unauthorized - Invalid credentials
     
-#### Booking (  api/booking  )
-
-   ###### GET ?date=yyyy-MM-dd
+   ###### GET /booking?date=yyyy-MM-dd
    
     Date parameter must be in the format specified 
     
 
 
-   ###### GET /{id}
+   ###### GET booking/{id}
    
     Response
  
@@ -66,7 +63,7 @@ All responses will be in JSON with appropriate Status codes as per REST semantic
     200 OK on Success
     404 Not Found
     
-   ###### POST
+   ###### POST /booking
    
        Arguments
         
@@ -87,7 +84,7 @@ All responses will be in JSON with appropriate Status codes as per REST semantic
     401 Unauthorized - User is not authorized to make this booking
     
     
-   ###### PATCH /id?courtNumber=3
+   ###### PATCH booking/id?courtNumber=3
     
     Response
     204 No Content on Success
@@ -95,7 +92,7 @@ All responses will be in JSON with appropriate Status codes as per REST semantic
     401 Unauthorized - User is not authorized to modify this booking
 
     
-   ###### DELETE /id
+   ###### DELETE booking/id
    
     Response
     204 No Content on Success
