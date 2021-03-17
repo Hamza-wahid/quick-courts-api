@@ -11,7 +11,7 @@ import booking.messages.BookingManagerMessages.BookingRequestResult._
 import booking.messages.BookingManagerMessages._
 import booking.requests.BookingRequests._
 import core.Constants.{AccessToken, Authorization}
-import core.authorisation.JwtAuthUtils.{getTokenClaims, isTokenApproved}
+import core.authorisation.JwtAuth.{getTokenClaims, isTokenApproved}
 
 
 trait BookingRouter extends BaseRoute with BookingJsonProtocol {

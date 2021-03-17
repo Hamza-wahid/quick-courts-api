@@ -5,7 +5,7 @@ import java.time.LocalTime
 import akka.actor.{Actor, ActorLogging}
 import akka.pattern.pipe
 import booking.messages.BookingManagerMessages._
-import core.authorisation.JwtAuthUtils.{generateToken, getMinutesPermittedPerDay}
+import core.authorisation.JwtAuth.{generateToken, getMinutesPermittedPerDay}
 import java.time.temporal.ChronoUnit.MINUTES
 
 import booking.Constants._
