@@ -12,7 +12,7 @@ Members are able to create, cancel and modify bookings
 
 ### End Points
 All responses will be in JSON with appropriate Status codes:
-#### Auth (  /auth   )
+#### Auth (  api/auth   )
 
 ###### POST /register
     Arguments
@@ -44,15 +44,15 @@ All responses will be in JSON with appropriate Status codes:
     200 OK on Success
     401 Unauthorized - Invalid credentials
     
-##### Booking /booking
+#### Booking (  api/booking  )
 
-   ###### GET api/booking?date=yyyy-MM-dd
+   ###### GET ?date=yyyy-MM-dd
    
     Date parameter must be in the format specified 
     
 
 
-   ###### GET api/booking/{id}
+   ###### GET /{id}
    
     Response
  
@@ -66,7 +66,7 @@ All responses will be in JSON with appropriate Status codes:
     200 OK on Success
     404 Not Found
     
-   ###### POST api/booking
+   ###### POST
    
        Arguments
         
@@ -87,7 +87,7 @@ All responses will be in JSON with appropriate Status codes:
     401 Unauthorized - User is not authorized to make this booking
     
     
-   ###### PATCH api/booking/id?courtNumber=3
+   ###### PATCH /id?courtNumber=3
     
     Response
     204 No Content on Success
@@ -95,7 +95,7 @@ All responses will be in JSON with appropriate Status codes:
     401 Unauthorized - User is not authorized to modify this booking
 
     
-   ###### DELETE api/booking/id
+   ###### DELETE /id
    
     Response
     204 No Content on Success
