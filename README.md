@@ -1,6 +1,6 @@
-#QuickCourts
+# QuickCourts
 
-###Summary
+### Summary
 The tennis club can sign up and register members at 3 tiers of membership (Basic, Premium and VIP) 
 with the tier determining the maximum court time a member can book per day in minutes. Currently, this is as follows but can be easily configured: 
 
