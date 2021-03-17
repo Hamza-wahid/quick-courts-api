@@ -1,12 +1,11 @@
 # QuickCourts
-
-### Summary
+## API
 The tennis club can sign up and register members at 3 tiers of membership (Basic, Premium and VIP) 
 with the tier determining the maximum court time a member can book per day in minutes. Currently, this is as follows but can be easily configured: 
 
-    * Standard = 60 minutes
-    * Premium = 120 minutes
-    * VIP = 150 minutes
+   * Standard = 60 minutes
+   * Premium = 120 minutes
+   * VIP = 150 minutes
     
     
 Members are able to create, cancel and modify bookings
