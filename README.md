@@ -11,7 +11,7 @@ with the tier determining the maximum court time a member can book per day in mi
 Members are able to create, cancel and modify bookings
 
 ### End Points
-All responses will be in JSON with appropriate Status codes:
+All responses will be in JSON with appropriate Status codes as per REST semantics.
 #### Auth (  api/auth   )
 
 ###### POST /register
