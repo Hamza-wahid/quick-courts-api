@@ -7,7 +7,7 @@ import authentication.Constants._
 import authentication.messages.AuthManagerMessages.{LoginUser, RegisterUser, UserAuthResult}
 import authentication.messages.AuthManagerMessages.UserAuthResult._
 import authentication.requests.UserAuthRequests._
-import core.authorisation.JwtAuthUtils.generateToken
+import core.authorisation.JwtAuth.generateToken
 
 import scala.concurrent.{ExecutionContext, Future}
 
